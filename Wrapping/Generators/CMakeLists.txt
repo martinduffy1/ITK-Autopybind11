@@ -37,7 +37,7 @@ set(WRAP_ITK_GENERATORS CACHE INTERNAL "Internal generators list.")
 set(WRAP_ITK_UNUSED_GENERATORS CACHE INTERNAL "Internal unused generators list.")
 
 # The following list of directories int the "ITK/Wrapping/Generators
-set(_candidate_generators "SwigInterface" "Doc" "CastXML" "Python")
+set(_candidate_generators "AutoPybind" "Doc" "CastXML" "Python")
 
 foreach(lang ${_candidate_generators})
   string(TOUPPER "${lang}" lang_upper)

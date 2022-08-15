@@ -29,22 +29,12 @@ macro(itk_end_wrap_module)
     endforeach()
     unset(_dep)
 
-    # add some libs required by this module
-    foreach(swig_lib ${WRAPPER_SWIG_LIBRARY_FILES})
-        get_filename_component(basename ${swig_lib} NAME)
-        list(APPEND swig_libs --swig-include ${basename})
-        file(COPY "${swig_lib}"
-                DESTINATION "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}")
-    endforeach()
-    unset(basename)
-    unset(swig_lib)
-
     # the list of files generated for the module
-    unset(i_files)
+    unset(i_files )
 
-    unset(idx_files)
-    unset(typedef_in_files)
-    unset(typedef_files)
+    unset(idx_files )
+    unset(typedef_in_files )
+    unset(typedef_files )
     set(mdx_file "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/${WRAPPER_LIBRARY_NAME}.mdx")
     set(module_interface_file "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/${WRAPPER_LIBRARY_NAME}.i")
 
@@ -65,7 +55,7 @@ macro(itk_end_wrap_module)
         # ITK_PYI_INDEX_FILES: A list of the index files generated for a specific submodule
         #   Used to generate a complete list of index files generated which should be used as a
         #   dependency in the final pyi_generator step. (duplicate comment from above)
-        if(_module STREQUAL "stdcomplex" OR _module STREQUAL "stdnumeric_limits")
+        if( _module STREQUAL "stdcomplex" OR _module STREQUAL "stdnumeric_limits")
           # Skip classes that require specialized wrapping behavior, see igenerator.py comments
           # for ["stdcomplex", "stdnumeric_limits"]
         else()
@@ -76,9 +66,9 @@ macro(itk_end_wrap_module)
     endforeach()
 
     # the master idx file (mdx file)
-    unset(mdx_files)
-    unset(mdx_opts)
-    unset(deps_imports)
+    unset(mdx_files )
+    unset(mdx_opts )
+    unset(deps_imports )
 
     list(APPEND mdx_files "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/${WRAPPER_LIBRARY_NAME}.mdx")
     foreach(dep ${WRAPPER_LIBRARY_DEPENDS})
@@ -95,7 +85,7 @@ macro(itk_end_wrap_module)
     configure_file("${ITK_WRAP_SWIGINTERFACE_SOURCE_DIR}/Master.mdx.in" "${mdx_file}" @ONLY)
     unset(CONFIG_INDEX_FILE_CONTENT)
 
-    unset(CONFIG_MODULE_INTERFACE_CONTENT) #"${deps_imports}${SWIG_INTERFACE_MODULE_CONTENT}")
+    unset(CONFIG_MODULE_INTERFACE_CONTENT ) #"${deps_imports}${SWIG_INTERFACE_MODULE_CONTENT}")
     #@WRAPPER_LIBRARY_NAME@ @CONFIG_MODULE_INTERFACE_INCLUDES@ CONFIG_MODULE_INTERFACE_INCLUDES@
     configure_file("${ITK_WRAP_SWIGINTERFACE_SOURCE_DIR}/module.i.in" "${module_interface_file}"
             @ONLY)
@@ -178,7 +168,7 @@ macro(itk_end_wrap_module)
 
     # the ${WRAPPER_LIBRARY_NAME}Swig target will run igenerator.py if files do not already exist
     if(NOT TARGET ${WRAPPER_LIBRARY_NAME}Swig)
-        add_custom_target(${WRAPPER_LIBRARY_NAME}Swig DEPENDS ${mdx_file} ${i_files} ${typedef_files} ${idx_files})
+        add_custom_target(${WRAPPER_LIBRARY_NAME}Swig DEPENDS ${mdx_file} ${typedef_files} ${idx_files})
         add_dependencies(${WRAPPER_LIBRARY_NAME}Swig ${WRAPPER_LIBRARY_NAME}CastXML)
     endif()
     unset(typedef_files)
@@ -259,14 +249,14 @@ macro(itk_end_wrap_module)
     unset(ITK_WRAP_PYTHON_LIBRARY_CONFIG_FILE)
     unset(ITK_WRAP_PYTHON_SNAKE_CASE)
 
-    unset(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_DECLS)
-    unset(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_CALLS)
+    unset(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_DECLS )
+    unset(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_CALLS )
     if(NOT BUILD_SHARED_LIBS)
         if(WRAPPER_LIBRARY_NAME STREQUAL "ITKCommon")
 
             if(WIN32)
                 set(DO_NOT_WAIT_FOR_THREADS_DECLS "#include \"itkThreadPool.h\"")
-                set(DO_NOT_WAIT_FOR_THREADS_CALLS "itk::ThreadPool::SetDoNotWaitForThreads(true);")
+                set(DO_NOT_WAIT_FOR_THREADS_CALLS "itk::ThreadPool::SetDoNotWaitForThreads( true );")
             endif()
 
             set(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_DECLS "
@@ -293,11 +283,11 @@ _ITKCommonPython_API[_ITKCommonPython_GetGlobalSingletonIndex_NUM] = (void *)_IT
 
 /* Create a Capsule containing the API pointer array's address */
 PyObject * cAPIObject = PyCapsule_New((void *)_ITKCommonPython_API,
-\"itk._ITKCommonPython._C_API\", NULL);
+\"_ITKCommonPython._C_API\", NULL);
 
-if(cAPIObject != NULL)
+if( cAPIObject != NULL )
 {
-PyModule_AddObject(m, \"_C_API\", cAPIObject);
+PyModule_AddObject( m, \"_C_API\", cAPIObject );
 }
 ${DO_NOT_WAIT_FOR_THREADS_CALLS}
 ")
@@ -307,7 +297,7 @@ ${DO_NOT_WAIT_FOR_THREADS_CALLS}
 ${DO_NOT_WAIT_FOR_THREADS_DECLS}
 ")
             set(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_CALLS "
-if(import__ITKCommonPython() < 0)
+if( import__ITKCommonPython() < 0 )
 {
 #if PY_VERSION_HEX >= 0x03000000
 return NULL;
@@ -315,7 +305,7 @@ return NULL;
 return;
 #endif
 }
-itk::SingletonIndex::SetInstance(_ITKCommonPython_GetGlobalSingletonIndex());
+itk::SingletonIndex::SetInstance( _ITKCommonPython_GetGlobalSingletonIndex() );
 itk::ObjectFactoryBase::Initialize();
 ${DO_NOT_WAIT_FOR_THREADS_CALLS}
 ")
@@ -360,76 +350,6 @@ ${DO_NOT_WAIT_FOR_THREADS_CALLS}
     # Run swig to produce the *Python.cpp and the *Python.py file
     itk_setup_swig_python("Module" ${base_name} ${interface_file} ${python_file} ${cpp_file} "" ${lib})
 
-    # build all the c++ files from this module in a common lib
-    if(NOT TARGET ${lib})
-        add_library(${lib} MODULE ${cpp_file} ${ITK_WRAP_PYTHON_CXX_FILES} ${WRAPPER_LIBRARY_CXX_SOURCES})
-        set_target_properties(${lib} PROPERTIES PREFIX "_")
-
-        # gcc 4.4 complains a lot without this flag when building in release mode
-        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-            set_target_properties(${lib} PROPERTIES COMPILE_FLAGS "-fno-strict-aliasing -w")
-        endif()
-        # extension is not the same on windows
-        if(WIN32)
-            # normally need *.pyd
-            # python_d requires libraries named *_d.pyd
-            set_target_properties(${lib} PROPERTIES SUFFIX .pyd)
-            set_target_properties(${lib} PROPERTIES DEBUG_POSTFIX "_d")
-
-            if(MSVC)
-                # Disables 'conversion from 'type1' to 'type2', possible loss of data warnings
-                set_target_properties(${lib} PROPERTIES COMPILE_FLAGS "/wd4244")
-            endif()
-        endif()
-        if (NOT MSVC)
-            include(CheckIPOSupported)
-            check_ipo_supported(RESULT ipo_is_supported)
-            if (ipo_is_supported)
-                set_property(TARGET ${lib} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
-            endif()
-            unset(ipo_is_supported)
-        endif()
-
-        # Link the modules together
-        target_link_libraries(${lib} LINK_PUBLIC ${WRAPPER_LIBRARY_LINK_LIBRARIES})
-        itk_target_link_libraries_with_dynamic_lookup(${lib} LINK_PUBLIC ${PYTHON_LIBRARY})
-
-        if(USE_COMPILER_HIDDEN_VISIBILITY)
-            # Prefer to use target properties supported by newer cmake
-            set_target_properties(${lib} PROPERTIES CXX_VISIBILITY_PRESET hidden)
-            set_target_properties(${lib} PROPERTIES C_VISIBILITY_PRESET hidden)
-            set_target_properties(${lib} PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
-        endif()
-
-        add_dependencies(${lib} ${WRAPPER_LIBRARY_NAME}Swig)
-        if(${module_prefix}_WRAP_DOC)
-            add_dependencies(${lib} ${WRAPPER_LIBRARY_NAME}Doxygen)
-        endif()
-        set(_component_module "")
-        if(WRAP_ITK_INSTALL_COMPONENT_PER_MODULE)
-            if("${WRAPPER_LIBRARY_NAME}" MATCHES "^ITK(PyUtils|PyBase)$")
-                set(_component_module "ITKCommon")
-            else()
-                set(_component_module "${WRAPPER_LIBRARY_NAME}")
-            endif()
-        endif()
-        install(TARGETS "${lib}"
-                DESTINATION "${PY_SITE_PACKAGES_PATH}/itk"
-                COMPONENT ${_component_module}${WRAP_ITK_INSTALL_COMPONENT_IDENTIFIER}RuntimeLibraries
-                )
-        unset(_component_module)
-
-        if(NOT EXTERNAL_WRAP_ITK_PROJECT)
-            # don't depends on the targets from wrapitk in external projects
-            foreach(dep ${WRAPPER_LIBRARY_DEPENDS})
-                add_dependencies(${lib} ${dep}Swig)
-                if(${module_prefix}_WRAP_DOC)
-                    add_dependencies(${lib} ${dep}Doxygen)
-                endif()
-            endforeach()
-        endif()
-    endif()
-
     if(${module_prefix}_WRAP_DOC)
         # be sure to not include a header several times
         if(NOT "${ITK_WRAP_DOC_DOXYGEN_HEADERS}" STREQUAL "")
@@ -473,10 +393,10 @@ ${DO_NOT_WAIT_FOR_THREADS_CALLS}
     ###
     # These variable are only used inside this function
 
-    unset(CASTXML_FORCE_INSTANTIATE)
+    unset(CASTXML_FORCE_INSTANTIATE )
     unset(CastXML_OUTPUT_FILES)
     unset(CASTXML_TYPEDEFS)
-    unset(ITK_WRAP_DOC_DOXY2SWIG_INPUT)  # the c++ name - swig names definitions
+    unset(ITK_WRAP_DOC_DOXY2SWIG_INPUT )  # the c++ name - swig names definitions
     unset(ITK_WRAP_PYTHON_CONFIGURATION_TEMPLATES)
     unset(ITK_WRAP_PYTHON_CURRENT_CLASS)
     unset(ITK_WRAP_PYTHON_CURRENT_SWIG_NAME)
@@ -489,7 +409,7 @@ ${DO_NOT_WAIT_FOR_THREADS_CALLS}
     unset(PixelType)
     unset(SWIG_INTERFACE_MDX_CONTENT)
     unset(SWIG_INTERFACE_MODULE_CONTENT)
-    unset(SWIG_INTERFACE_TYPEDEFS)
+    unset(SWIG_INTERFACE_TYPEDEFS )
     unset(WRAPPER_CLASS)
     unset(WRAPPER_INCLUDE_FILES)
 endmacro() # itk_end_wrap_module

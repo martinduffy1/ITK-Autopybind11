@@ -193,92 +193,109 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/WrapITK.pth.in"
 ###############################################################################
 # Define the wrapping macros
 
-macro(itk_setup_swig_python type base_name interface_file python_file cpp_file doc_file)
+macro(itk_setup_swig_python type base_name interface_file python_file cpp_file doc_file lib)
 
-  #############################################################################
-  # Runs swig to produce the *Python.cpp and the *Python.py file
-  # Called by itk_end_wrap_module_python and by itk_end_wrap_submodule_python
-  # Type will then be either "Module" or "Submodule"
-  #############################################################################
 
-  set(swig_command ${SWIG_EXECUTABLE})
-  if(ITK_USE_CCACHE)
-    set(swig_command ${CCACHE_EXECUTABLE} ${swig_command})
+  if (ITK_WRAP_SWIG)
+    #############################################################################
+    # Runs swig to produce the *Python.cpp and the *Python.py file
+    # Called by itk_end_wrap_module_python and by itk_end_wrap_submodule_python
+    # Type will then be either "Module" or "Submodule"
+    #############################################################################
+
+    set(swig_command ${SWIG_EXECUTABLE})
+    if(ITK_USE_CCACHE)
+      set(swig_command ${CCACHE_EXECUTABLE} ${swig_command})
+    endif()
+     
+    set(_swig_depend)
+    if(NOT ITK_USE_SYSTEM_SWIG)
+      # The ExternalProject SWIG install.
+      set(_swig_depend swig)
+    endif()
+     
+    # set(dependencies "${DEPS}")
+
+    # if(NOT EXTERNAL_WRAP_ITK_PROJECT)
+    #  configure_file(${WrapITK_SOURCE_DIR}/Generators/Python/PyBase/pyBase.i
+    #   "${WRAP_ITK_TYPEDEFS_DIRECTORY}" COPYONLY)
+    # list(APPEND dependencies "${WRAP_ITK_TYPEDEFS_DIRECTORY}/pyBase.i")
+    # endif()
+
+    if("${type}" STREQUAL "Module")
+      # Module
+      list(APPEND dependencies
+        "${ITK_WRAP_PYTHON_LIBRARY_DEPS}"
+        "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python/${WRAPPER_LIBRARY_NAME}_ext.i")
+    else()
+     # Submodule
+     list(APPEND dependencies
+       "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python/${base_name}_ext.i"
+       "${doc_file}")
+    endif()
+    add_custom_command(
+      OUTPUT ${cpp_file} ${python_file}
+      COMMAND ${swig_command} -c++ -python -O -features autodoc=2
+      -py3
+      -doxygen
+      -Werror
+      -w302 # Identifier 'name' redefined (ignored)
+      -w303 # %extend defined for an undeclared class 'name' (to avoid warning about customization in pyBase.i)
+      -w312 # Unnamed nested class not currently supported (ignored)
+      -w314 # 'identifier' is a lang keyword
+      -w361 # operator! ignored
+      -w362 # operator= ignored
+      -w350 # operator new ignored
+      -w383 # operator++ ignored
+      -w384 # operator-- ignored
+      -w389 # operator[] ignored
+      -w394 # operator new[] ignored
+      -w395 # operator delete[] ignored
+      -w467 # Overloaded declaration not supported (no type checking rule for 'type')
+      -w508 # Declaration of 'name' shadows declaration accessible via operator->(), previous declaration of'declaration'
+      -w509 # Overloaded method declaration effectively ignored, as it is shadowed by declaration
+      -o ${cpp_file}
+      # The order of this include folder and the next one matters as otherwise the following exception is thrown:
+      # "This version of exception.i should not be used"
+      -I${SWIG_DIR}/python
+      -I${SWIG_DIR}
+      -I${WRAP_ITK_CMAKE_DIR}/Generators
+      -I${WRAP_ITK_TYPEDEFS_DIRECTORY}/python
+      -I${WRAP_ITK_TYPEDEFS_DIRECTORY}
+       ${WRAP_ITK_SWIG_ARGS_PYTHON}
+      -outdir ${ITK_PYTHON_PACKAGE_DIR}
+       ${interface_file}
+      WORKING_DIRECTORY ${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python
+      DEPENDS ${dependencies}
+    )
+  
+    WRAP_ITK_PYTHON_BINDINGS_INSTALL(/itk "${WRAPPER_LIBRARY_NAME}" "${python_file}")
+  
+    unset(dependencies)
+    unset(swig_command)
+
   endif()
 
-  set(_swig_depend)
-  if(NOT ITK_USE_SYSTEM_SWIG)
-    # The ExternalProject SWIG install.
-    set(_swig_depend swig)
+  if (ITK_WRAP_AUTOPYBIND)
+    find_package(AutoPyBind11)
+    get_filename_component(mdx_name ${CMAKE_CURRENT_BINARY_DIR} NAME)
+    set(lib ${WRAPPER_LIBRARY_NAME})
+    set(XML_INPUT "${CMAKE_CURRENT_BINARY_DIR}/../../castxml_inputs/${base_name}.xml")
+    if (EXISTS ${XML_INPUT} AND (NOT ITK_APB_WRAP OR mdx_name IN_LIST ITK_APB_WRAP))
+      set(MDX_INPUT "${CMAKE_CURRENT_BINARY_DIR}/../../Typedefs/${mdx_name}.mdx")
+      set(PY_DEST ${ITK_PYTHON_PACKAGE_DIR})
+      set(LINKS ${ITK_WRAP_PYTHON_LIBRARY_DEPS})
+
+      # message(${mdx_name})
+      message("autopybind11_add_module(${base_name} XML_INPUT ${XML_INPUT} MASTER_MDX ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${base_name})")
+      # message("${cpp_file}")
+      autopybind11_fetch_build_pybind11(PYBIND11_DIR ${PYBIND11_SRC_DIR})
+      autopybind11_add_module(${base_name} XML_INPUT ${XML_INPUT} MASTER_MDX ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${base_name})
+      #  autopybind11_add_module(${base_name} XML_INPUT Wrapping/castxml_inputs/${base_name}.xml MASTER_MDX Wrapping/Typedefs/${base_name}.mdx DESTINATION ${PY_DEST} GEN_ONLY TRUE)
+    endif()
   endif()
 
-  set(dependencies
-    "${DEPS}"
-    "${interface_file}"
-    "${_swig_depend}")
-
-  unset(_swig_depend)
-
-  if(NOT EXTERNAL_WRAP_ITK_PROJECT)
-    configure_file(${WrapITK_SOURCE_DIR}/Generators/Python/PyBase/pyBase.i
-      "${WRAP_ITK_TYPEDEFS_DIRECTORY}" COPYONLY)
-    list(APPEND dependencies "${WRAP_ITK_TYPEDEFS_DIRECTORY}/pyBase.i")
-  endif()
-
-  if("${type}" STREQUAL "Module")
-    # Module
-    list(APPEND dependencies
-      "${ITK_WRAP_PYTHON_LIBRARY_DEPS}"
-      "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python/${WRAPPER_LIBRARY_NAME}_ext.i")
-  else()
-    # Submodule
-    list(APPEND dependencies
-      "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python/${base_name}_ext.i"
-      "${doc_file}")
-  endif()
-
-  add_custom_command(
-    OUTPUT ${cpp_file} ${python_file}
-    COMMAND ${swig_command} -c++ -python -O -features autodoc=2
-    -py3
-    -doxygen
-    -Werror
-    -w302 # Identifier 'name' redefined (ignored)
-    -w303 # %extend defined for an undeclared class 'name' (to avoid warning about customization in pyBase.i)
-    -w312 # Unnamed nested class not currently supported (ignored)
-    -w314 # 'identifier' is a lang keyword
-    -w361 # operator! ignored
-    -w362 # operator= ignored
-    -w350 # operator new ignored
-    -w383 # operator++ ignored
-    -w384 # operator-- ignored
-    -w389 # operator[] ignored
-    -w394 # operator new[] ignored
-    -w395 # operator delete[] ignored
-    -w467 # Overloaded declaration not supported (no type checking rule for 'type')
-    -w508 # Declaration of 'name' shadows declaration accessible via operator->(), previous declaration of'declaration'
-    -w509 # Overloaded method declaration effectively ignored, as it is shadowed by declaration
-    -o ${cpp_file}
-    # The order of this include folder and the next one matters as otherwise the following exception is thrown:
-    # "This version of exception.i should not be used"
-    -I${SWIG_DIR}/python
-    -I${SWIG_DIR}
-    -I${WRAP_ITK_CMAKE_DIR}/Generators
-    -I${WRAP_ITK_TYPEDEFS_DIRECTORY}/python
-    -I${WRAP_ITK_TYPEDEFS_DIRECTORY}
-    ${WRAP_ITK_SWIG_ARGS_PYTHON}
-    -outdir ${ITK_PYTHON_PACKAGE_DIR}
-    ${interface_file}
-    WORKING_DIRECTORY ${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/python
-    DEPENDS ${dependencies}
-  )
-
-  WRAP_ITK_PYTHON_BINDINGS_INSTALL(/itk "${WRAPPER_LIBRARY_NAME}" "${python_file}")
-
-  unset(dependencies)
-  unset(swig_command)
 endmacro()
-
 
 macro(itk_end_wrap_submodule_python group_name)
 
@@ -324,6 +341,7 @@ macro(itk_end_wrap_submodule_python group_name)
   set(_swig_python_suffix "Python")
   set(python_file "${ITK_PYTHON_PACKAGE_DIR}/${base_name}${_swig_python_suffix}.py")
   set(cpp_file "${CMAKE_CURRENT_BINARY_DIR}/${base_name}${_swig_python_suffix}.cpp")
+  set(lib ${WRAPPER_LIBRARY_NAME})
   unset(_swig_python_suffix)
 
   # create the python customization for that wrap_*.cmake file.
@@ -338,7 +356,7 @@ macro(itk_end_wrap_submodule_python group_name)
   endforeach()
 
   # Run swig to produce the *Python.cpp and the *Python.py file
-  itk_setup_swig_python("Submodule" ${base_name} ${interface_file} ${python_file} ${cpp_file} "${doc_file}")
+  itk_setup_swig_python("Submodule" ${base_name} ${interface_file} ${python_file} ${cpp_file} "${doc_file}" lib)
 
   # add the c++ files which will be generated by the swig command to the
   # list of python related c++ files, so they can be built at the end

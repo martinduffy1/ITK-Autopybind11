@@ -321,7 +321,7 @@ macro(itk_auto_load_submodules)
 
         # store the path of the idx file to store it in the mdx file
         string(APPEND SWIG_INTERFACE_MDX_CONTENT "${_each_submodule_this_module}.idx\n")
-        string(APPEND SWIG_INTERFACE_MODULE_CONTENT "%import ${_each_submodule_this_module}.i\n")
+        # string(APPEND SWIG_INTERFACE_MODULE_CONTENT "%import ${_each_submodule_this_module}.i\n")
         generate_swig_interface_in_file()
 
         itk_end_wrap_submodule_python("${_each_submodule_this_module}")

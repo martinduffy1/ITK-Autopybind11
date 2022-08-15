@@ -1051,7 +1051,7 @@ macro(itk_wrap_filter_dims var_name dimension_condition)
 endmacro()
 
 include(${CMAKE_CURRENT_LIST_DIR}/macro_files/itk_auto_load_submodules.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/macro_files/itk_end_wrap_module.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/macro_files/itk_apb_wrap_module.cmake)
 
 #################
 function(itk_auto_load_and_end_wrap_submodules)
