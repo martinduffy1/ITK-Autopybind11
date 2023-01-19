@@ -13,14 +13,20 @@ if(NOT DEFINED AutoPybind11)
   FetchContent_Declare(
     AutoPybind11
     GIT_REPOSITORY https://gitlab.kitware.com/john.parent/autopybind11
-    GIT_TAG        "b3c15faca272817d68b2180f1922d0e4862975df"
+    GIT_TAG        "48c3fda097276748514b34dc59e4727fffe26564"
     )
   set(FETCHCONTENT_QUIET OFF)
   FetchContent_MakeAvailable(AutoPyBind11)
+
+  execute_process(
+    COMMAND
+      ${PYTHON_EXECUTABLE} -m pip install
+      ${autopybind11_SOURCE_DIR}
+  )
 endif()
 
 find_package(Python3 COMPONENTS Development REQUIRED)
-set(PYTHON_EXECUTABLE /usr/bin/python3.8)
+# set(PYTHON_EXECUTABLE /usr/bin/python3.8)
 set(PYGCCXML_DIR ${ITK_CMAKE_DIR}/../Modules/ThirdParty/pygccxml/src CACHE INTERNAL "pygccxml path")
 
 ###############################################################################

@@ -278,7 +278,8 @@ macro(itk_setup_swig_python type base_name interface_file python_file cpp_file d
 
   if (ITK_WRAP_AUTOPYBIND)
     find_package(AutoPyBind11)
-    get_filename_component(mdx_name ${CMAKE_CURRENT_BINARY_DIR} NAME)
+    autopybind11_fetch_build_pybind11(PYBIND11_DIR ${PYBIND11_SRC_DIR})
+    get_filename_component(mdx_name ${WRAPPER_LIBRARY_NAME} NAME)
     set(lib ${WRAPPER_LIBRARY_NAME})
     set(XML_INPUT "${CMAKE_CURRENT_BINARY_DIR}/../../castxml_inputs/${base_name}.xml")
 
@@ -289,15 +290,12 @@ macro(itk_setup_swig_python type base_name interface_file python_file cpp_file d
       message("autopybind11_add_library(ITK)")
     endif()
 
-    if (EXISTS ${XML_INPUT} AND (NOT ITK_APB_WRAP OR mdx_name IN_LIST ITK_APB_WRAP))
-      set(MDX_INPUT "${CMAKE_CURRENT_BINARY_DIR}/../../Typedefs/${mdx_name}.mdx")
-      set(PY_DEST ${ITK_PYTHON_PACKAGE_DIR})
-      set(LINKS ${ITK_WRAP_PYTHON_LIBRARY_DEPS})
+    set(MDX_INPUT "${WRAPPER_MASTER_INDEX_OUTPUT_DIR}/${WRAPPER_LIBRARY_NAME}.mdx")
+    set(PY_DEST ${ITK_PYTHON_PACKAGE_DIR})
+    set(LINKS ${ITK_WRAP_PYTHON_LIBRARY_DEPS})
 
-      autopybind11_fetch_build_pybind11(PYBIND11_DIR ${PYBIND11_SRC_DIR})
-      message("autopybind11_add_library_submodule(${mdx_name} MASTER_MDX ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${mdx_name} MODULE ITK)")
-      autopybind11_add_library_submodule(${mdx_name} MASTER_MDX ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${mdx_name} MODULE ITK)
-    endif()
+    message("autopybind11_add_library_submodule(${mdx_name} MASTER_MDX ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${mdx_name} MODULE ITK)")
+    autopybind11_add_library_submodule(${mdx_name} MDX_INPUT ${MDX_INPUT} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} LINK_LIBRARIES ${mdx_name} MODULE ITK)
   endif()
 
 endmacro()
